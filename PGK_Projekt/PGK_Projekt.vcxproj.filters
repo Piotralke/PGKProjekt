@@ -33,6 +33,12 @@
     <ClCompile Include="Engine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Skybox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stb_image.h">
@@ -50,8 +56,26 @@
     <ClInclude Include="engine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Skybox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="fragmentShader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="skyboxShaderVertex.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="skyboxShaderFragment.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="vertexShader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

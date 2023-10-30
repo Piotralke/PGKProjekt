@@ -141,16 +141,24 @@
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Skybox.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BitmapHandler.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="engine.h" />
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="Skybox.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="fragmentShader.glsl" />
     <None Include="packages.config" />
+    <None Include="skyboxShaderVertex.glsl" />
+    <None Include="skyboxShaderFragment.glsl" />
+    <None Include="vertexShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

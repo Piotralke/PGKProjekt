@@ -19,15 +19,6 @@ void Engine::processInput()
 		isFullscreen(true);
 	if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
 		isFullscreen(false);
-	float cameraSpeed = static_cast<float>(6.0 * deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera->VerticalMove(true, cameraSpeed);
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera->VerticalMove(false, cameraSpeed);
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera->HorizontalMove(false, cameraSpeed);
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera->HorizontalMove(true, cameraSpeed);
 }
 void Engine::setWindowSize(unsigned int width, unsigned int height)
 {
@@ -56,6 +47,15 @@ void Engine::setBackgroundColor(float r, float g, float b, float a)
 	backgroundColor.b = b / 255;
 	backgroundColor.a = a / 255;
 }
+unsigned int Engine::getWidth()
+{
+	return this->screenWidth;
+}
+unsigned int Engine::getHeight()
+{
+	return this->screenHeight;
+}
+
 void Engine::mainLoop()
 {
 	//Point3D point3D(-0.5f, -0.5f,0.0f);
@@ -95,69 +95,299 @@ void Engine::mainLoop()
 
 
 	};
+
+	const char* vertexShader = R"(#version 330 core
+
+// Positions/Coordinates
+layout (location = 0) in vec3 aPos;
+// Normals (not necessarily normalized)
+layout (location = 1) in vec3 aNormal;
+// Colors
+layout (location = 2) in vec3 aColor;
+// Texture Coordinates
+layout (location = 3) in vec2 aTex;
+
+
+// Outputs the current position for the Fragment Shader
+out vec3 crntPos;
+// Outputs the normal for the Fragment Shader
+out vec3 Normal;
+// Outputs the color for the Fragment Shader
+out vec3 color;
+// Outputs the texture coordinates to the Fragment Shader
+out vec2 texCoord;
+
+
+
+// Imports the camera matrix
+uniform mat4 camMatrix;
+// Imports the transformation matrices
+uniform mat4 model;
+uniform mat4 translation;
+uniform mat4 rotation;
+uniform mat4 scale;
+
+
+void main()
+{
+	// calculates current position
+	crntPos = vec3(model * translation * rotation * scale * vec4(aPos, 1.0f));
+	// Assigns the normal from the Vertex Data to "Normal"
+	Normal = aNormal;
+	// Assigns the colors from the Vertex Data to "color"
+	color = aColor;
+	// Assigns the texture coordinates from the Vertex Data to "texCoord"
+	texCoord = mat2(0.0, -1.0, 1.0, 0.0) * aTex;
+	// Outputs the positions/coordinates of all vertices
+	gl_Position = camMatrix * vec4(crntPos, 1.0);
+})";
+	const char* fragmentShader = R"(#version 330 core
+
+// Outputs colors in RGBA
+out vec4 FragColor;
+
+// Imports the current position from the Vertex Shader
+in vec3 crntPos;
+// Imports the normal from the Vertex Shader
+in vec3 Normal;
+// Imports the color from the Vertex Shader
+in vec3 color;
+// Imports the texture coordinates from the Vertex Shader
+in vec2 texCoord;
+
+
+// Gets the Texture Units from the main function
+uniform sampler2D diffuse0;
+uniform sampler2D specular0;
+// Gets the color of the light from the main function
+uniform vec4 lightColor;
+// Gets the position of the light from the main function
+uniform vec3 lightPos;
+// Gets the position of the camera from the main function
+uniform vec3 camPos;
+
+
+vec4 pointLight()
+{	
+	// used in two variables so I calculate it here to not have to do it twice
+	vec3 lightVec = lightPos - crntPos;
+
+	// intensity of light with respect to distance
+	float dist = length(lightVec);
+	float a = 3.0;
+	float b = 0.7;
+	float inten = 1.0f / (a * dist * dist + b * dist + 1.0f);
+
+	// ambient lighting
+	float ambient = 0.20f;
+
+	// diffuse lighting
+	vec3 normal = normalize(Normal);
+	vec3 lightDirection = normalize(lightVec);
+	float diffuse = max(dot(normal, lightDirection), 0.0f);
+
+	// specular lighting
+	float specularLight = 0.50f;
+	vec3 viewDirection = normalize(camPos - crntPos);
+	vec3 reflectionDirection = reflect(-lightDirection, normal);
+	float specAmount = pow(max(dot(viewDirection, reflectionDirection), 0.0f), 16);
+	float specular = specAmount * specularLight;
+
+	return (texture(diffuse0, texCoord) * (diffuse * inten + ambient) + texture(specular0, texCoord).r * specular * inten) * lightColor;
+}
+
+vec4 direcLight()
+{
+	// ambient lighting
+	float ambient = 0.50f;
+
+	// diffuse lighting
+	vec3 normal = normalize(Normal);
+	vec3 lightDirection = normalize(lightPos - crntPos);
+	float diffuse = max(dot(normal, lightDirection), 0.0f);
+
+	// specular lighting
+	float specularLight = 0.50f;
+	vec3 viewDirection = normalize(camPos - crntPos);
+	vec3 reflectionDirection = reflect(-lightDirection, normal);
+	float specAmount = pow(max(dot(viewDirection, reflectionDirection), 0.0f), 16);
+	float specular = specAmount * specularLight;
+
+	return (texture(diffuse0, texCoord) * (diffuse + ambient) + texture(specular0, texCoord).r * specular) * lightColor;
+}
+
+vec4 spotLight()
+{
+	// controls how big the area that is lit up is
+	float outerCone = 0.90f;
+	float innerCone = 0.95f;
+
+	// ambient lighting
+	float ambient = 0.20f;
+
+	// diffuse lighting
+	vec3 normal = normalize(Normal);
+	vec3 lightDirection = normalize(lightPos - crntPos);
+	float diffuse = max(dot(normal, lightDirection), 0.0f);
+
+	// specular lighting
+	float specularLight = 0.50f;
+	vec3 viewDirection = normalize(camPos - crntPos);
+	vec3 reflectionDirection = reflect(-lightDirection, normal);
+	float specAmount = pow(max(dot(viewDirection, reflectionDirection), 0.0f), 16);
+	float specular = specAmount * specularLight;
+
+	// calculates the intensity of the crntPos based on its angle to the center of the light cone
+	float angle = dot(vec3(0.0f, -1.0f, 0.0f), -lightDirection);
+	float inten = clamp((angle - outerCone) / (innerCone - outerCone), 0.0f, 1.0f);
+
+	return (texture(diffuse0, texCoord) * (diffuse * inten + ambient) + texture(specular0, texCoord).r * specular * inten) * lightColor;
+}
+
+
+void main()
+{
+	// outputs final color
+	FragColor = direcLight();
+})";
+
+const char* skyboxVertex = R"(#version 330 core
+layout (location = 0) in vec3 aPos;
+
+out vec3 texCoords;
+
+uniform mat4 projection;
+uniform mat4 view;
+
+void main()
+{
+    vec4 pos = projection * view * vec4(aPos, 1.0f);
+    // Having z equal w will always result in a depth of 1.0f
+    gl_Position = vec4(pos.x, pos.y, pos.w, pos.w);
+    // We want to flip the z axis due to the different coordinate systems (left hand vs right hand)
+    texCoords = vec3(aPos.x, aPos.y, -aPos.z);
+}   )";
+const char* skyboxFragment = R"(#version 330 core
+out vec4 FragColor;
+
+in vec3 texCoords;
+
+uniform samplerCube skybox;
+
+void main()
+{    
+    FragColor = texture(skybox, texCoords);
+})";
+	Shader shaderProgram(vertexShader, fragmentShader);
+	Shader skyboxShader(skyboxVertex, skyboxFragment);
+
+	glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	glm::vec3 lightPos = glm::vec3(0.0f, 20.0f, -20.0f);
+
+	shaderProgram.Activate();
+	glUniform4f(glGetUniformLocation(shaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+	glUniform3f(glGetUniformLocation(shaderProgram.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+	skyboxShader.Activate();
+	glUniform1i(glGetUniformLocation(skyboxShader.ID, "skybox"), 0);
+
+	// Enables the Depth Buffer
+	glEnable(GL_DEPTH_TEST);
+
+	//// Enables Cull Facing
+	//glEnable(GL_CULL_FACE);
+	//// Keeps front faces
+	//glCullFace(GL_FRONT);
+	//// Uses counter clock-wise standard
+	//glFrontFace(GL_CCW);
+
+	Camera camera(getWidth(), getHeight(), glm::vec3(0.0f, 0.0f, 2.0f));
+
 	setBackgroundColor(255.0f, 100.0f, 0.0f, 100.0f);
 	glm::vec3 red(1.0f, 0.0f, 0.0f);
-	glm::vec3 pos(0.0f, -1.0f, 0.0f);
+	glm::vec3 pos(5.0f, 0.0f, 0.0f);
+	glm::vec3 pos2(0.0f, 0.0f, 5.0f);
+	glm::vec3 pos3(-5.0f, 0.0f, 0.0f);
+	glm::vec3 pos4(0.0f, 0.0f, -5.0f);
 	Cube cube(pos, red);
-	Cube skybox(pos, red);
-	skybox.scale(100);
-
+	Cube cube2(pos2, red);
+	Cube cube3(pos3, red);
+	Cube cube4(pos4, red);
+	Skybox skybox;
+	unsigned int cubemapTexture = skybox.getCubemapTexture();
 	std::string parentDir = (fs::current_path().fs::path::parent_path()).string();
 	std::string texPath = "\\diffuse.jpg";
 	unsigned int diffuseMap = bitmapHandler->loadTexture((parentDir + texPath).c_str());
 
-	std::string texPath2 = "\\skybox.jpg";
-	unsigned int diffuseMap2 = bitmapHandler->loadTexture((parentDir + texPath2).c_str());
-
-	glEnable(GL_TEXTURE_2D);
-	glUseProgram(programShader2);
-	glUniform1i(glGetUniformLocation(programShader2, "material.diffuse"), 0);
-	glUniform1i(glGetUniformLocation(programShader, "skybox"), 0);
+	//glEnable(GL_TEXTURE_2D);
+	//glUseProgram(programShader2);
+	//glUniform1i(glGetUniformLocation(programShader2, "material.diffuse"), 0);
+	//glUniform1i(glGetUniformLocation(programShader, "skybox"), 0);
 	while (!glfwWindowShouldClose(getWindow()))
 	{
 
-		glUseProgram(programShader2);
 		float currentFrame = static_cast<float>(glfwGetTime());
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 		processInput();
-		glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
+		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+		// Clean the back buffer and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		glUseProgram(programShader2);
-		glUniform3f(glGetUniformLocation(programShader2, "light.position"), 0, 50, 0);
-		glUniform3f(glGetUniformLocation(programShader2, "viewPos"), camera->getCameraPos().x, camera->getCameraPos().y, camera->getCameraPos().z);
-		glUniform3f(glGetUniformLocation(programShader2, "light.ambient"), 0.2f, 0.2f, 0.2f);
-		glUniform3f(glGetUniformLocation(programShader2, "light.diffuse"), 0.5f, 0.5f, 0.5f);
-		glUniform3f(glGetUniformLocation(programShader2, "light.specular"), 1.0f, 1.0f, 1.0f);
-		glUniform3f(glGetUniformLocation(programShader2, "material.specular"), 0.5f, 0.5f, 0.5f);
-		glUniform1f(glGetUniformLocation(programShader2, "material.shininess"), 64.0f);
-
-		glUseProgram(programShader2);
-		cube.draw(programShader2, diffuseMap, 1);
 		
-		glActiveTexture(GL_TEXTURE0);
+		camera.Inputs(window);
+		camera.updateMatrix(45.0f, 0.1f, 100.0f, shaderProgram);
+
+
+		shaderProgram.Activate();
+		cube.draw(shaderProgram, diffuseMap, 0, camera);
+		cube2.draw(shaderProgram, diffuseMap, 0, camera);
+		cube3.draw(shaderProgram, diffuseMap, 0, camera);
+		cube4.draw(shaderProgram, diffuseMap, 0, camera);
 		
-
-		camera->UpdateCamera(programShader2, programShader2);
-
 		glDepthFunc(GL_LEQUAL);
-		skybox.draw(programShader, diffuseMap2, 2);
+
+		skyboxShader.Activate();
+		glm::mat4 view = glm::mat4(1.0f);
+		glm::mat4 proj = glm::mat4(1.0f);
+		// We make the mat4 into a mat3 and then a mat4 again in order to get rid of the last row and column
+		// The last row and column affect the translation of the skybox (which we don't want to affect)
+		view = glm::mat4(glm::mat3(glm::lookAt(camera.Position, camera.Position + camera.Orientation, camera.Up)));
+		projection = glm::perspective(glm::radians(45.0f), (float) getWidth() / getHeight(), 0.1f, 100.0f);
+		glUniformMatrix4fv(glGetUniformLocation(skyboxShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(skyboxShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+
+
+		// Draws the cubemap as the last object so we can save a bit of performance by discarding all fragments
+		// where an object is present (a depth of 1.0f will always fail against any object's depth value)
+		glBindVertexArray(skybox.getVAO());
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+
+		// Switch back to the normal depth function
 		glDepthFunc(GL_LESS);
-		glfwSwapBuffers(getWindow());
+
+
+		// Swap the back buffer with the front buffer
+		glfwSwapBuffers(window);
+		// Take care of all GLFW events
 		glfwPollEvents();
 	}
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
-	glDeleteProgram(programShader2);
+	shaderProgram.Delete();
+	skyboxShader.Delete();
+	// Delete window before ending the program
+	glfwDestroyWindow(window);
 	glfwTerminate();
 }
 
-void MouseCallback(GLFWwindow* window, double xpos, double ypos)
-{
-	Engine* eng = Engine::getInstance();
-	eng->getCamera()->UpdateMouse(xpos, ypos);
-}
+//void MouseCallback(GLFWwindow* window, double xpos, double ypos)
+//{
+//	Engine* eng = Engine::getInstance();
+//	eng->getCamera()->UpdateMouse(xpos, ypos);
+//}
 
 //void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 //{

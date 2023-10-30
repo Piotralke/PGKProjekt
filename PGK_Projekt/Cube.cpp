@@ -1,16 +1,32 @@
 #include "Cube.h"
-void Cube::draw(unsigned int programShader,unsigned int texture,int textureNum)
+#include <gtc/type_ptr.hpp>
+
+void Cube::draw(Shader& shader,unsigned int texture,int textureNum, Camera& camera)
 {
-	glUseProgram(programShader);
-	glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, position);
-	model = glm::rotate(model, rotationAngleX,glm::vec3(1.0,0.0,0.0));
-	model = glm::rotate(model, rotationAngleY, glm::vec3(0.0, 1.0, 0.0));
-	model = glm::rotate(model, rotationAngleZ, glm::vec3(0.0, 0.0, 1.0));
-	model = glm::scale(model, scalingFactor);
-    glUniformMatrix4fv(glGetUniformLocation(programShader, "model"), 1, GL_FALSE, &model[0][0]);
-	glBindTexture(GL_TEXTURE_2D, texture);
 	glBindVertexArray(this->VAO);
+	glActiveTexture(GL_TEXTURE0 + textureNum);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glUniform1i(glGetUniformLocation(shader.ID, "diffuse0"), textureNum);
+	glUniform1i(glGetUniformLocation(shader.ID, "specular0"), textureNum);
+	glUniform3f(glGetUniformLocation(shader.ID, "camPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "camMatrix"), 1, GL_FALSE, glm::value_ptr(camera.cameraMatrix));
+	glm::mat4 trans = glm::mat4(1.0f);
+	glm::mat4 rot = glm::mat4(1.0f);
+	glm::mat4 sca = glm::mat4(2.0f);
+	glm::mat4 matrix = glm::mat4(1.0f);
+	glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+	// Transform the matrices to their correct form
+	trans = glm::translate(trans, this->position);
+	rot = glm::mat4_cast(rotation);
+	sca = glm::scale(sca, scalingFactor);
+	
+	// Push the matrices to the vertex shader
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "translation"), 1, GL_FALSE, glm::value_ptr(trans));
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "rotation"), 1, GL_FALSE, glm::value_ptr(rot));
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "scale"), 1, GL_FALSE, glm::value_ptr(sca));
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(matrix));
+
+	// Draw the actual mesh
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 }
 void Cube::setVertices(float vertices[])
