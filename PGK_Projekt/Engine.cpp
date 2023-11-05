@@ -1,15 +1,18 @@
 #include "engine.h"
 namespace fs = std::filesystem;
 Engine* Engine::instance = NULL;
+
 void Engine::init()
 {
-	glfwSetWindowSizeLimits(getWindow(), 1024, 576, GLFW_DONT_CARE, GLFW_DONT_CARE);
+	glfwSetWindowSizeLimits(getWindow(), 1920, 1080, GLFW_DONT_CARE, GLFW_DONT_CARE);
 	glfwMakeContextCurrent(this->getWindow());
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		glfwTerminate();
 	}
+
+	
 }
 void Engine::processInput()
 {
@@ -103,9 +106,9 @@ layout (location = 0) in vec3 aPos;
 // Normals (not necessarily normalized)
 layout (location = 1) in vec3 aNormal;
 // Colors
-layout (location = 2) in vec3 aColor;
+//layout (location = 2) in vec3 aColor;
 // Texture Coordinates
-layout (location = 3) in vec2 aTex;
+layout (location = 2) in vec2 aTex;
 
 
 // Outputs the current position for the Fragment Shader
@@ -113,7 +116,7 @@ out vec3 crntPos;
 // Outputs the normal for the Fragment Shader
 out vec3 Normal;
 // Outputs the color for the Fragment Shader
-out vec3 color;
+//out vec3 color;
 // Outputs the texture coordinates to the Fragment Shader
 out vec2 texCoord;
 
@@ -135,7 +138,7 @@ void main()
 	// Assigns the normal from the Vertex Data to "Normal"
 	Normal = aNormal;
 	// Assigns the colors from the Vertex Data to "color"
-	color = aColor;
+	/*color = aColor;*/
 	// Assigns the texture coordinates from the Vertex Data to "texCoord"
 	texCoord = mat2(0.0, -1.0, 1.0, 0.0) * aTex;
 	// Outputs the positions/coordinates of all vertices
@@ -151,14 +154,14 @@ in vec3 crntPos;
 // Imports the normal from the Vertex Shader
 in vec3 Normal;
 // Imports the color from the Vertex Shader
-in vec3 color;
+//in vec3 color;
 // Imports the texture coordinates from the Vertex Shader
 in vec2 texCoord;
 
 
 // Gets the Texture Units from the main function
 uniform sampler2D diffuse0;
-uniform sampler2D specular0;
+//uniform sampler2D specular0;
 // Gets the color of the light from the main function
 uniform vec4 lightColor;
 // Gets the position of the light from the main function
@@ -167,34 +170,34 @@ uniform vec3 lightPos;
 uniform vec3 camPos;
 
 
-vec4 pointLight()
-{	
-	// used in two variables so I calculate it here to not have to do it twice
-	vec3 lightVec = lightPos - crntPos;
-
-	// intensity of light with respect to distance
-	float dist = length(lightVec);
-	float a = 3.0;
-	float b = 0.7;
-	float inten = 1.0f / (a * dist * dist + b * dist + 1.0f);
-
-	// ambient lighting
-	float ambient = 0.20f;
-
-	// diffuse lighting
-	vec3 normal = normalize(Normal);
-	vec3 lightDirection = normalize(lightVec);
-	float diffuse = max(dot(normal, lightDirection), 0.0f);
-
-	// specular lighting
-	float specularLight = 0.50f;
-	vec3 viewDirection = normalize(camPos - crntPos);
-	vec3 reflectionDirection = reflect(-lightDirection, normal);
-	float specAmount = pow(max(dot(viewDirection, reflectionDirection), 0.0f), 16);
-	float specular = specAmount * specularLight;
-
-	return (texture(diffuse0, texCoord) * (diffuse * inten + ambient) + texture(specular0, texCoord).r * specular * inten) * lightColor;
-}
+//vec4 pointLight()
+//{	
+//	// used in two variables so I calculate it here to not have to do it twice
+//	vec3 lightVec = lightPos - crntPos;
+//
+//	// intensity of light with respect to distance
+//	float dist = length(lightVec);
+//	float a = 3.0;
+//	float b = 0.7;
+//	float inten = 1.0f / (a * dist * dist + b * dist + 1.0f);
+//
+//	// ambient lighting
+//	float ambient = 0.20f;
+//
+//	// diffuse lighting
+//	vec3 normal = normalize(Normal);
+//	vec3 lightDirection = normalize(lightVec);
+//	float diffuse = max(dot(normal, lightDirection), 0.0f);
+//
+//	// specular lighting
+//	float specularLight = 0.50f;
+//	vec3 viewDirection = normalize(camPos - crntPos);
+//	vec3 reflectionDirection = reflect(-lightDirection, normal);
+//	float specAmount = pow(max(dot(viewDirection, reflectionDirection), 0.0f), 16);
+//	float specular = specAmount * specularLight;
+//
+//	return (texture(diffuse0, texCoord) * (diffuse * inten + ambient) + texture(specular0, texCoord).r * specular * inten) * lightColor;
+//}
 
 vec4 direcLight()
 {
@@ -210,39 +213,39 @@ vec4 direcLight()
 	float specularLight = 0.50f;
 	vec3 viewDirection = normalize(camPos - crntPos);
 	vec3 reflectionDirection = reflect(-lightDirection, normal);
-	float specAmount = pow(max(dot(viewDirection, reflectionDirection), 0.0f), 16);
-	float specular = specAmount * specularLight;
+	//float specAmount = pow(max(dot(viewDirection, reflectionDirection), 0.0f), 16);
+	//float specular = specAmount * specularLight;
 
-	return (texture(diffuse0, texCoord) * (diffuse + ambient) + texture(specular0, texCoord).r * specular) * lightColor;
+	return (texture(diffuse0, texCoord) * (diffuse + ambient)) * lightColor;
 }
 
-vec4 spotLight()
-{
-	// controls how big the area that is lit up is
-	float outerCone = 0.90f;
-	float innerCone = 0.95f;
-
-	// ambient lighting
-	float ambient = 0.20f;
-
-	// diffuse lighting
-	vec3 normal = normalize(Normal);
-	vec3 lightDirection = normalize(lightPos - crntPos);
-	float diffuse = max(dot(normal, lightDirection), 0.0f);
-
-	// specular lighting
-	float specularLight = 0.50f;
-	vec3 viewDirection = normalize(camPos - crntPos);
-	vec3 reflectionDirection = reflect(-lightDirection, normal);
-	float specAmount = pow(max(dot(viewDirection, reflectionDirection), 0.0f), 16);
-	float specular = specAmount * specularLight;
-
-	// calculates the intensity of the crntPos based on its angle to the center of the light cone
-	float angle = dot(vec3(0.0f, -1.0f, 0.0f), -lightDirection);
-	float inten = clamp((angle - outerCone) / (innerCone - outerCone), 0.0f, 1.0f);
-
-	return (texture(diffuse0, texCoord) * (diffuse * inten + ambient) + texture(specular0, texCoord).r * specular * inten) * lightColor;
-}
+//vec4 spotLight()
+//{
+//	// controls how big the area that is lit up is
+//	float outerCone = 0.90f;
+//	float innerCone = 0.95f;
+//
+//	// ambient lighting
+//	float ambient = 0.20f;
+//
+//	// diffuse lighting
+//	vec3 normal = normalize(Normal);
+//	vec3 lightDirection = normalize(lightPos - crntPos);
+//	float diffuse = max(dot(normal, lightDirection), 0.0f);
+//
+//	// specular lighting
+//	float specularLight = 0.50f;
+//	vec3 viewDirection = normalize(camPos - crntPos);
+//	vec3 reflectionDirection = reflect(-lightDirection, normal);
+//	float specAmount = pow(max(dot(viewDirection, reflectionDirection), 0.0f), 16);
+//	float specular = specAmount * specularLight;
+//
+//	// calculates the intensity of the crntPos based on its angle to the center of the light cone
+//	float angle = dot(vec3(0.0f, -1.0f, 0.0f), -lightDirection);
+//	float inten = clamp((angle - outerCone) / (innerCone - outerCone), 0.0f, 1.0f);
+//
+//	return (texture(diffuse0, texCoord) * (diffuse * inten + ambient) + texture(specular0, texCoord).r * specular * inten) * lightColor;
+//}
 
 
 void main()
@@ -300,24 +303,62 @@ void main()
 	//// Uses counter clock-wise standard
 	//glFrontFace(GL_CCW);
 
-	Camera camera(getWidth(), getHeight(), glm::vec3(0.0f, 0.0f, 2.0f));
 
+	Camera camera(getWidth(), getHeight(), glm::vec3(0.0f, 0.0f, 2.0f)); 
+	// GLUquadric* quad;
+	// quad = gluNewQuadric();
+	// gluSphere(quad, 25, 100, 20);
 	setBackgroundColor(255.0f, 100.0f, 0.0f, 100.0f);
 	glm::vec3 red(1.0f, 0.0f, 0.0f);
 	glm::vec3 pos(5.0f, 0.0f, 0.0f);
 	glm::vec3 pos2(0.0f, 0.0f, 5.0f);
 	glm::vec3 pos3(-5.0f, 0.0f, 0.0f);
-	glm::vec3 pos4(0.0f, 0.0f, -5.0f);
-	Cube cube(pos, red);
-	Cube cube2(pos2, red);
-	Cube cube3(pos3, red);
-	Cube cube4(pos4, red);
+	glm::vec3 pos69(-50.0f, 0.0f, 150.0f);
+	glm::vec3 pos33(0.0f, 0.0f, 0.0f);
+	glm::vec3 pos4(0.0f, -5.0f, 0.0f);
+	/*Cube cube(pos);*/
+	Cube cube2(pos2);
+	Cube brickHouse(pos3);
+	Cube brickHouse2(pos69);
+	brickHouse.scale(10);
+	brickHouse2.scale(10);
+	Cuboid windowModel(pos33, 0.1f, 1.5f, 2.0f);
+	Cuboid floor(pos4,400.0f,1.0f,400.0f);
+	Sphere sphere(pos, 1.0f, 20, 20);
 	Skybox skybox;
 	unsigned int cubemapTexture = skybox.getCubemapTexture();
 	std::string parentDir = (fs::current_path().fs::path::parent_path()).string();
-	std::string texPath = "\\diffuse.jpg";
-	unsigned int diffuseMap = bitmapHandler->loadTexture((parentDir + texPath).c_str());
-
+//	unsigned int diffuseMap = bitmapHandler->loadTexture((parentDir + "\\diffuse.jpg").c_str());
+	unsigned int grassTexture = bitmapHandler->loadTexture((parentDir + "\\grass.jpg").c_str());
+	//unsigned int houseTexture1 = bitmapHandler->loadTexture((parentDir + "\\house1.jpg").c_str());
+	//unsigned int houseTexture2 = bitmapHandler->loadTexture((parentDir + "\\house2.jpg").c_str());
+	//unsigned int houseTexture3 = bitmapHandler->loadTexture((parentDir + "\\house3.jpg").c_str());
+	//unsigned int houseTexture4 = bitmapHandler->loadTexture((parentDir + "\\house4.jpg").c_str());
+	//unsigned int houseTexture5 = bitmapHandler->loadTexture((parentDir + "\\house5.jpg").c_str());
+	//unsigned int houseTexture6 = bitmapHandler->loadTexture((parentDir + "\\house6.jpg").c_str());
+	//unsigned int houseTexture7 = bitmapHandler->loadTexture((parentDir + "\\house7.jpg").c_str());
+	//unsigned int blokTexture1 = bitmapHandler->loadTexture((parentDir + "\\blok1.jpg").c_str());
+	//unsigned int blokTexture2 = bitmapHandler->loadTexture((parentDir + "\\blok2.jpg").c_str());
+	//unsigned int blokTexture3 = bitmapHandler->loadTexture((parentDir + "\\blok3.jpg").c_str());
+	//unsigned int blokTexture4 = bitmapHandler->loadTexture((parentDir + "\\blok4.jpg").c_str());
+	unsigned int brickTexture = bitmapHandler->loadTexture((parentDir + "\\brick.jpg").c_str());
+	unsigned int windowTexture = bitmapHandler->loadTexture((parentDir + "\\okno.jpg").c_str());
+	/*std::vector<Vertex> sphereVertices;
+	std::vector<unsigned int> sphereIndices;
+	createSphere(sphereVertices, sphereIndices, 1.0f, 50, 50);
+	std::cout << "VERTICES" << std::endl;
+	for (int i = 0; i < sphereVertices.size(); i++)
+	{
+		std::cout << sphereVertices[i].Position.x << ", " << sphereVertices[i].Position.y
+			<< ", " << sphereVertices[i].Position.z << ", " << sphereVertices[i].Normal.x
+			<< ", " << sphereVertices[i].Normal.y
+			<< ", " << sphereVertices[i].Normal.z << ", " << sphereVertices[i].TexCoords.x << ", " << sphereVertices[i].TexCoords.y << std::endl;
+	}
+	std::cout << "INDICES" << std::endl;
+	for (int j = 0; j < sphereIndices.size(); j++)
+	{
+		std::cout << sphereIndices[j] << ", ";
+	}*/
 	//glEnable(GL_TEXTURE_2D);
 	//glUseProgram(programShader2);
 	//glUniform1i(glGetUniformLocation(programShader2, "material.diffuse"), 0);
@@ -334,15 +375,22 @@ void main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		camera.Inputs(window);
-		camera.updateMatrix(45.0f, 0.1f, 100.0f, shaderProgram);
+		camera.updateMatrix(45.0f, 0.1f, 500.0f, shaderProgram);
 
 
 		shaderProgram.Activate();
-		cube.draw(shaderProgram, diffuseMap, 0, camera);
-		cube2.draw(shaderProgram, diffuseMap, 0, camera);
-		cube3.draw(shaderProgram, diffuseMap, 0, camera);
-		cube4.draw(shaderProgram, diffuseMap, 0, camera);
+		/*cube.draw(shaderProgram, diffuseMap, 0, camera);*/
+		/*sphere.draw(shaderProgram, diffuseMap, 0, camera);
+
+		cube2.draw(shaderProgram, houseTexture1, 0, camera);*/
+		brickHouse.draw(shaderProgram, brickTexture, 0, camera);
+		brickHouse2.draw(shaderProgram, brickTexture, 0, camera);
+
+		windowModel.draw(shaderProgram, windowTexture, 0, camera);
+
+		floor.draw(shaderProgram, grassTexture, 0, camera);
 		
+
 		glDepthFunc(GL_LEQUAL);
 
 		skyboxShader.Activate();

@@ -1,7 +1,7 @@
 #pragma once
 #ifndef engine_h
 #define engine_h
-#include "Cube.h"
+#include "Sphere.h"
 #include "Skybox.h"
 #include <time.h>
 #include <filesystem>
@@ -49,6 +49,7 @@ public:
 			std::cout << "Failed to create GLFW window" << std::endl;
 			glfwTerminate();
 		}
+		
 		init();
 		
 
