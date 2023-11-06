@@ -285,7 +285,7 @@ void main()
 	Shader skyboxShader(skyboxVertex, skyboxFragment);
 
 	glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	glm::vec3 lightPos = glm::vec3(0.0f, 20.0f, -20.0f);
+	glm::vec3 lightPos = glm::vec3(0.0f, 100.0f, -200.0f);
 
 	shaderProgram.Activate();
 	glUniform4f(glGetUniformLocation(shaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
@@ -312,17 +312,15 @@ void main()
 	glm::vec3 red(1.0f, 0.0f, 0.0f);
 	glm::vec3 pos(5.0f, 0.0f, 0.0f);
 	glm::vec3 pos2(0.0f, 0.0f, 5.0f);
-	glm::vec3 pos3(-5.0f, 0.0f, 0.0f);
+	glm::vec3 pos3(-5.0f, 5.0f, 0.0f);
 	glm::vec3 pos69(-50.0f, 0.0f, 150.0f);
 	glm::vec3 pos33(0.0f, 0.0f, 0.0f);
-	glm::vec3 pos4(0.0f, -5.0f, 0.0f);
+	glm::vec3 pos4(0.0f, 0.0f, 0.0f);
 	/*Cube cube(pos);*/
 	Cube cube2(pos2);
-	Cube brickHouse(pos3);
 	Cube brickHouse2(pos69);
-	brickHouse.scale(10);
 	brickHouse2.scale(10);
-	Cuboid windowModel(pos33, 0.1f, 1.5f, 2.0f);
+	/*Cuboid windowModel(pos33, 0.1f, 1.5f, 2.0f);*/
 	Cuboid floor(pos4,400.0f,1.0f,400.0f);
 	Sphere sphere(pos, 1.0f, 20, 20);
 	Skybox skybox;
@@ -342,8 +340,13 @@ void main()
 	//unsigned int blokTexture3 = bitmapHandler->loadTexture((parentDir + "\\blok3.jpg").c_str());
 	//unsigned int blokTexture4 = bitmapHandler->loadTexture((parentDir + "\\blok4.jpg").c_str());
 	unsigned int brickTexture = bitmapHandler->loadTexture((parentDir + "\\brick.jpg").c_str());
+	unsigned int woodTexture = bitmapHandler->loadTexture((parentDir + "\\wood.jpg").c_str());
 	unsigned int windowTexture = bitmapHandler->loadTexture((parentDir + "\\okno.jpg").c_str());
-	/*std::vector<Vertex> sphereVertices;
+	unsigned int doorTexture = bitmapHandler->loadTexture((parentDir + "\\door.jpg").c_str());
+	unsigned int roofTexture = bitmapHandler->loadTexture((parentDir + "\\roof.jpg").c_str());
+
+	House1 brickHouse(pos3, woodTexture, 0, windowTexture, 0, doorTexture, 0, roofTexture, 0, 1);
+		/*std::vector<Vertex> sphereVertices;
 	std::vector<unsigned int> sphereIndices;
 	createSphere(sphereVertices, sphereIndices, 1.0f, 50, 50);
 	std::cout << "VERTICES" << std::endl;
@@ -383,10 +386,8 @@ void main()
 		/*sphere.draw(shaderProgram, diffuseMap, 0, camera);
 
 		cube2.draw(shaderProgram, houseTexture1, 0, camera);*/
-		brickHouse.draw(shaderProgram, brickTexture, 0, camera);
+		brickHouse.draw(shaderProgram, camera);
 		brickHouse2.draw(shaderProgram, brickTexture, 0, camera);
-
-		windowModel.draw(shaderProgram, windowTexture, 0, camera);
 
 		floor.draw(shaderProgram, grassTexture, 0, camera);
 		

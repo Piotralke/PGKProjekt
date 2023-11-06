@@ -14,10 +14,12 @@ void Cuboid::draw(Shader& shader, unsigned int texture, int textureNum, Camera& 
 	glm::mat4 rot = glm::mat4(1.0f);
 	glm::mat4 sca = glm::mat4(2.0f);
 	glm::mat4 matrix = glm::mat4(1.0f);
-	glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+	rot = glm::rotate(rot, glm::radians(rotationAngleX), glm::vec3(1.0f, 0.0f, 0.0f));
+	rot = glm::rotate(rot, glm::radians(rotationAngleY), glm::vec3(0.0f, 1.0f, 0.0f));
+	rot = glm::rotate(rot, glm::radians(rotationAngleZ), glm::vec3(0.0f, 0.0f, 1.0f));
 	// Transform the matrices to their correct form
 	trans = glm::translate(trans, this->position);
-	rot = glm::mat4_cast(rotation);
+
 	sca = glm::scale(sca, scalingFactor);
 
 	// Push the matrices to the vertex shader
@@ -50,6 +52,11 @@ void Cuboid::rotateY(float angle)
 void Cuboid::rotateZ(float angle)
 {
 	rotationAngleZ += angle;
+}
+void Cuboid::scale(float k)
+{
+	glm::vec3 factor(k, k, k);
+	scalingFactor *= factor;
 }
 void Cuboid::scaleX(float k)
 {

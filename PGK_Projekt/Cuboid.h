@@ -70,7 +70,7 @@ protected:
 30, 31, 32, 33, 34, 35
 	};
 public:
-
+	Cuboid() {}
 	Cuboid(glm::vec3 point, float width, float height, float depth)
 	{
 
@@ -110,6 +110,8 @@ public:
 	void rotateY(float angle);
 
 	void rotateZ(float angle);
+
+	void scale(float k);
 
 	void scaleX(float k);
 
