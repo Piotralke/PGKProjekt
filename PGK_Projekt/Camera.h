@@ -21,7 +21,7 @@ public:
 
 	// Prevents the camera from jumping around when first clicking left click
 	bool firstClick = true;
-
+	bool shouldDraw = false;
 	// Stores the width and height of the window
 	int width;
 	int height;
@@ -29,13 +29,13 @@ public:
 	// Adjust the speed of the camera and it's sensitivity when looking around
 	float speed = 0.0001f;
 	float sensitivity = 100.0f;
-
+	/*float foscalLength = 5.0f;*/
 	// Camera constructor to set up initial values
 	Camera(int width, int height, glm::vec3 position);
 
 	
 	// Updates the camera matrix to the Vertex Shader
-	void updateMatrix(float FOVdeg, float nearPlane, float farPlane, Shader& shader);
+	void updateMatrix(float FOVdeg, float nearPlane, float farPlane);
 	// Handles camera inputs
 	void Inputs(GLFWwindow* window);
 

@@ -1,10 +1,9 @@
-#include "engine.h"
+﻿#include "engine.h"
 namespace fs = std::filesystem;
 Engine* Engine::instance = NULL;
-
 void Engine::init()
 {
-	glfwSetWindowSizeLimits(getWindow(), 1920, 1080, GLFW_DONT_CARE, GLFW_DONT_CARE);
+	glfwSetWindowSizeLimits(getWindow(), 1080, 1080, GLFW_DONT_CARE, GLFW_DONT_CARE);
 	glfwMakeContextCurrent(this->getWindow());
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
@@ -22,6 +21,7 @@ void Engine::processInput()
 		isFullscreen(true);
 	if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
 		isFullscreen(false);
+	
 }
 void Engine::setWindowSize(unsigned int width, unsigned int height)
 {
@@ -62,11 +62,6 @@ unsigned int Engine::getHeight()
 void Engine::mainLoop()
 {
 	//Point3D point3D(-0.5f, -0.5f,0.0f);
-	float vertices[] = {
-		-0.5f, -0.5f, 0.0f, // left  
-		 0.5f, -0.5f, 0.0f, // right 
-		-0.5f,  0.5f, 0.0f,  // top left    
-	};
 	float vertices2[] = {
 		2.0f, 3.5f, -3.0f, // left     
 	};
@@ -98,6 +93,7 @@ void Engine::mainLoop()
 
 
 	};
+
 
 	const char* vertexShader = R"(#version 330 core
 
@@ -281,6 +277,17 @@ void main()
 {    
     FragColor = texture(skybox, texCoords);
 })";
+
+const char* vertexShaderSource = "#version 330 core\n"
+"layout (location = 0) in vec2 position;\n"
+"void main() { gl_Position = vec4(position, 0.0, 1.0); }";
+
+
+const char* fragmentShaderSource = "#version 330 core\n"
+"out vec4 FragColor;\n"
+"void main() { FragColor = vec4(0.0, 0.0, 0.0, 0.0); }";
+
+	Shader circleShader(vertexShaderSource, fragmentShaderSource);
 	Shader shaderProgram(vertexShader, fragmentShader);
 	Shader skyboxShader(skyboxVertex, skyboxFragment);
 
@@ -295,6 +302,7 @@ void main()
 
 	// Enables the Depth Buffer
 	glEnable(GL_DEPTH_TEST);
+	// glEnable(GL_STENCIL_TEST);
 
 	//// Enables Cull Facing
 	//glEnable(GL_CULL_FACE);
@@ -302,6 +310,9 @@ void main()
 	//glCullFace(GL_FRONT);
 	//// Uses counter clock-wise standard
 	//glFrontFace(GL_CCW);
+
+	
+
 
 
 	Camera camera(getWidth(), getHeight(), glm::vec3(0.0f, 0.0f, 2.0f)); 
@@ -312,14 +323,13 @@ void main()
 	glm::vec3 red(1.0f, 0.0f, 0.0f);
 	glm::vec3 pos(5.0f, 0.0f, 0.0f);
 	glm::vec3 pos2(0.0f, 0.0f, 5.0f);
-	glm::vec3 pos3(-5.0f, 5.0f, 0.0f);
+	glm::vec3 posHouse1(-5.0f, 5.0f, 0.0f);
+	glm::vec3 posHouse2(-13.0f, 5.0f, 4.0f);
 	glm::vec3 pos69(-50.0f, 0.0f, 150.0f);
 	glm::vec3 pos33(0.0f, 0.0f, 0.0f);
 	glm::vec3 pos4(0.0f, 0.0f, 0.0f);
 	/*Cube cube(pos);*/
 	Cube cube2(pos2);
-	Cube brickHouse2(pos69);
-	brickHouse2.scale(10);
 	/*Cuboid windowModel(pos33, 0.1f, 1.5f, 2.0f);*/
 	Cuboid floor(pos4,400.0f,1.0f,400.0f);
 	Sphere sphere(pos, 1.0f, 20, 20);
@@ -345,7 +355,11 @@ void main()
 	unsigned int doorTexture = bitmapHandler->loadTexture((parentDir + "\\door.jpg").c_str());
 	unsigned int roofTexture = bitmapHandler->loadTexture((parentDir + "\\roof.jpg").c_str());
 
-	House1 brickHouse(pos3, woodTexture, 0, windowTexture, 0, doorTexture, 0, roofTexture, 0, 1);
+	House1 brickHouse(posHouse1, woodTexture, 0, windowTexture, 0, doorTexture, 0, roofTexture, 0, 1);
+	House1 brickHouse2(posHouse2, woodTexture, 0, windowTexture, 0, doorTexture, 0, roofTexture, 0, 1);
+
+	Circle circle(0.8,64);
+	camera.updateMatrix(45.0f, 0.1f, 500.0f);
 		/*std::vector<Vertex> sphereVertices;
 	std::vector<unsigned int> sphereIndices;
 	createSphere(sphereVertices, sphereIndices, 1.0f, 50, 50);
@@ -375,23 +389,41 @@ void main()
 		processInput();
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 		// Clean the back buffer and depth buffer
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
+		glClearStencil(0);
+		glStencilMask(0xFF);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+		glEnable(GL_STENCIL_TEST); // Enables testing AND writing functionalities
+		glStencilFunc(GL_ALWAYS, 1, 0xFF); // Do not test the current value in the stencil buffer, always accept any value on there for drawing
+		glStencilMask(0xFF);
+		glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE); // Make every test succeed
+
 		camera.Inputs(window);
-		camera.updateMatrix(45.0f, 0.1f, 500.0f, shaderProgram);
 
+		
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_ONE, GL_ONE);
+		circleShader.Activate();
+		circle.draw(camera.shouldDraw);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); // Make sure you will no longer (over)write stencil values, even if any test succeeds
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); // Make sure we draw on the backbuffer again.
 
+		glStencilFunc(GL_EQUAL, 1, 0xFF); // Now we will only draw pixels where the corresponding stencil buffer value equals 1
+
+		// glDisable(GL_BLEND);
+		glStencilMask(0x00);
+		glStencilFunc(GL_EQUAL, 1, 0xFF);
 		shaderProgram.Activate();
 		/*cube.draw(shaderProgram, diffuseMap, 0, camera);*/
-		/*sphere.draw(shaderProgram, diffuseMap, 0, camera);
+		/*sphere.draw(shaderProgram, diffuseMap, 0, camera);*/
 
-		cube2.draw(shaderProgram, houseTexture1, 0, camera);*/
+
 		brickHouse.draw(shaderProgram, camera);
-		brickHouse2.draw(shaderProgram, brickTexture, 0, camera);
+		brickHouse2.draw(shaderProgram, camera);
 
 		floor.draw(shaderProgram, grassTexture, 0, camera);
 		
-
+		
 		glDepthFunc(GL_LEQUAL);
 
 		skyboxShader.Activate();
@@ -416,7 +448,7 @@ void main()
 
 		// Switch back to the normal depth function
 		glDepthFunc(GL_LESS);
-
+		glDisable(GL_STENCIL_TEST);
 
 		// Swap the back buffer with the front buffer
 		glfwSwapBuffers(window);
@@ -431,7 +463,6 @@ void main()
 	glfwDestroyWindow(window);
 	glfwTerminate();
 }
-
 //void MouseCallback(GLFWwindow* window, double xpos, double ypos)
 //{
 //	Engine* eng = Engine::getInstance();

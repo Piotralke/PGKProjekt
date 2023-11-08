@@ -7,7 +7,7 @@ Camera::Camera(int width, int height, glm::vec3 position)
 	Position = position;
 }
 
-void Camera::updateMatrix(float FOVdeg, float nearPlane, float farPlane, Shader& shader)
+void Camera::updateMatrix(float FOVdeg, float nearPlane, float farPlane)
 {
 	// Initializes matrices since otherwise they will be the null matrix
 	glm::mat4 view = glm::mat4(1.0f);
@@ -53,11 +53,11 @@ void Camera::Inputs(GLFWwindow* window)
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{
-		speed = 0.002f;
+		speed = 0.02f;
 	}
 	else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
 	{
-		speed = 0.0001f;
+		speed = 0.001f;
 	}
 
 
@@ -107,7 +107,20 @@ void Camera::Inputs(GLFWwindow* window)
 		// Makes sure the next time the camera looks around it doesn't jump
 		firstClick = true;
 	}
-
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+		// W³¹cz tryb nak³adania na stencil buffer
+		glEnable(GL_STENCIL_TEST);
+		glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+		glStencilFunc(GL_EQUAL, 1, 0xFFFFFFFF);
+		shouldDraw = true;
+		updateMatrix(10.0f, 0.1f, 500.0f);
+	}
+	else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
+		// Wy³¹cz tryb nak³adania na stencil buffer
+		glDisable(GL_STENCIL_TEST);
+		shouldDraw = false;
+		updateMatrix(45.0f, 0.1f, 500.0f);
+	}
 
 
 }

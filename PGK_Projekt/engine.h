@@ -3,9 +3,11 @@
 #define engine_h
 #include "House1.h"
 #include "Skybox.h"
+#include <gl/GL.h>
 #include <time.h>
 #include <filesystem>
 #include <string>
+#include "Circle.h"
 class Engine
 {
 private:
