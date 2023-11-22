@@ -90,7 +90,7 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    void draw(Shader& shader, unsigned int texture, int textureNum, Camera& camera);
+    void draw(Shader& shader, unsigned int texture, int textureNum, Camera& camera, Shader& blurShader);
 
     void translate(glm::vec3 translation);
 

@@ -1,7 +1,7 @@
 #include "Cuboid.h"
 #include <gtc/type_ptr.hpp>
 
-void Cuboid::draw(Shader& shader, unsigned int texture, int textureNum, Camera& camera)
+void Cuboid::draw(Shader& shader, unsigned int texture, int textureNum, Camera& camera, Shader& blurShader)
 {
 	glBindVertexArray(this->VAO);
 	glActiveTexture(GL_TEXTURE0 + textureNum);
@@ -27,9 +27,16 @@ void Cuboid::draw(Shader& shader, unsigned int texture, int textureNum, Camera& 
 	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "rotation"), 1, GL_FALSE, glm::value_ptr(rot));
 	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "scale"), 1, GL_FALSE, glm::value_ptr(sca));
 	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(matrix));
-
 	// Draw the actual mesh
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+	blurShader.Activate();
+	glUniform3f(glGetUniformLocation(blurShader.ID, "camPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+	glUniformMatrix4fv(glGetUniformLocation(blurShader.ID, "translation"), 1, GL_FALSE, glm::value_ptr(trans));
+	glUniformMatrix4fv(glGetUniformLocation(blurShader.ID, "rotation"), 1, GL_FALSE, glm::value_ptr(rot));
+	glUniformMatrix4fv(glGetUniformLocation(blurShader.ID, "scale"), 1, GL_FALSE, glm::value_ptr(sca));
+	glUniformMatrix4fv(glGetUniformLocation(blurShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(matrix));
+	shader.Activate();
 }
 
 

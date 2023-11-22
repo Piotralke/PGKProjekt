@@ -12,8 +12,6 @@ void Camera::updateMatrix(float FOVdeg, float nearPlane, float farPlane)
 	// Initializes matrices since otherwise they will be the null matrix
 	glm::mat4 view = glm::mat4(1.0f);
 	glm::mat4 projection = glm::mat4(1.0f);
-
-	// Makes camera look in the right direction from the right position
 	view = glm::lookAt(Position, Position + Orientation, Up);
 	// Adds perspective to the scene
 	projection = glm::perspective(glm::radians(FOVdeg), (float)width / height, nearPlane, farPlane);
@@ -53,14 +51,35 @@ void Camera::Inputs(GLFWwindow* window)
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{
-		speed = 0.02f;
+		speed = 0.2f;
 	}
 	else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
 	{
 		speed = 0.001f;
 	}
-
-
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	{
+		focalRange += 0.005f;
+		std::cout << focalRange << std::endl;
+	}
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	{
+			if(focalRange > 0.01f)
+				focalRange -= 0.005f;
+			std::cout << focalRange << std::endl;
+	}
+	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+	{
+		if (blur > 0.01f)
+			blur -= 0.1f;
+		std::cout << "b:" << blur << std::endl;
+	}
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+	{
+		
+		blur += 0.1f;
+		std::cout << "b:" << blur << std::endl;
+	}
 	// Handles mouse inputs
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 	{
@@ -113,13 +132,14 @@ void Camera::Inputs(GLFWwindow* window)
 		glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 		glStencilFunc(GL_EQUAL, 1, 0xFFFFFFFF);
 		shouldDraw = true;
-		updateMatrix(10.0f, 0.1f, 500.0f);
+		updateMatrix(10, 0.1f, 1000.0f);
 	}
 	else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
 		// Wy³¹cz tryb nak³adania na stencil buffer
 		glDisable(GL_STENCIL_TEST);
 		shouldDraw = false;
-		updateMatrix(45.0f, 0.1f, 500.0f);
+		
+		updateMatrix(45.0f, 0.1f, 1000.0f);
 	}
 
 

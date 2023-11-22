@@ -101,7 +101,7 @@ public:
 	//	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
-	void draw(Shader& shader, unsigned int texture, int textureNum, Camera& camera);
+	void draw(Shader& shader, unsigned int texture, int textureNum, Camera& camera, Shader& blurShader);
 
 	void translate(glm::vec3 translation);
 

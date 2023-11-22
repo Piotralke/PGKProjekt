@@ -18,7 +18,10 @@ public:
 	glm::vec3 Orientation = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
 	glm::mat4 cameraMatrix = glm::mat4(1.0f);
-
+	float focalRange = 20.0f;
+	//Jasnosc
+	float focusDistance = 1.0f;
+	float blur = 10.0f; 
 	// Prevents the camera from jumping around when first clicking left click
 	bool firstClick = true;
 	bool shouldDraw = false;

@@ -1,12 +1,12 @@
 #include "House1.h"
 #include <gtc/type_ptr.hpp>
 
-void House1::draw(Shader& shader, Camera& camera)
+void House1::draw(Shader& shader, Camera& camera, Shader& blurShader)
 {
-	this->cube->draw(shader, this->textureCube, this->textureCubeNumber, camera);
-	this->window->draw(shader, this->textureWindow, this->textureWindowNumber, camera);
-	this->door->draw(shader, this->textureDoor, this->textureDoorNumber, camera);
-    this->roof->draw(shader, this->textureRoof, this->textureRoofNumber, camera);
+	this->cube->draw(shader, this->textureCube, this->textureCubeNumber, camera, blurShader);
+	this->window->draw(shader, this->textureWindow, this->textureWindowNumber, camera, blurShader);
+	this->door->draw(shader, this->textureDoor, this->textureDoorNumber, camera, blurShader);
+    this->roof->draw(shader, this->textureRoof, this->textureRoofNumber, camera, blurShader);
 }
 
 void House1::translate(glm::vec3 translation)

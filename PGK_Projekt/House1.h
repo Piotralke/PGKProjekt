@@ -52,7 +52,7 @@ public:
 		this->scale(scale);
 		
 	}
-	void draw(Shader& shader, Camera& camera);
+	void draw(Shader& shader, Camera& camera,Shader& blurShader);
 	void translate(glm::vec3 translation);	
 
 	glm::vec3 getPosition();
