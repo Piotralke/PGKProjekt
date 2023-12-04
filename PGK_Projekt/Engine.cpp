@@ -212,20 +212,24 @@ void main()
     vec3 col = vec3(0.0);
     float totalWeight = 0.0;
 
-    for(float i = -1.0; i <= 1.0; i += 1.0)
+    int kernelSize = 5; // Dostosowana ilość próbek w kernelu
+
+    for (int i = 0; i < kernelSize; i++)
     {
-        for(float j = -1.0; j <= 1.0; j += 1.0)
+        for (int j = 0; j < kernelSize; j++)
         {
-            vec2 offset = vec2(i, j) * 1/(10*blur);
+            // Offsety są teraz bardziej koncentrowane wokół środka
+            vec2 offset = vec2(i - float(kernelSize) / 2.0, j - float(kernelSize) / 2.0) * 1.0 / (10.09 * blur);
+
             vec3 color = texture(screenTexture, TexCoords + offset).rgb;
 
-             vec2 depthTexCoord = (TexCoords + offset) * 0.5 + 0.5;  // Przelicz współrzędne tekstury dla bufora głębokości
+            // Przelicz współrzędne tekstury dla bufora głębokości
+            vec2 depthTexCoord = (TexCoords + offset) * 0.5 + 0.5;
             float depth = texture(depthTexture, depthTexCoord).r;
-			float depthDifference = abs(depth - focusDistance);
-			
-            float bokehFactor = smoothstep(focusDistance - focusRange, focusDistance + focusRange, depth);
-			// bokehFactor *= exp(-pow(depthDifference / focusRange, 2.0));
-			bokehFactor *= smoothstep(1.0, 0.0, depthDifference );
+            float depthDifference = abs(depth - focusDistance) / focusRange; // Znormalizuj depthDifference
+
+            // Poprawione wartości smoothstep dla depthDifference
+            float bokehFactor = smoothstep(0.0, 1.0, depthDifference);
 
             float weight = 1.0 - length(offset) / 1.4142;
 
@@ -236,7 +240,6 @@ void main()
 
     FragColor = vec4(col / totalWeight, 1.0);
 }
-
 )";
 
 	Shader circleShader(vertexShaderSource, fragmentShaderSource);
@@ -325,9 +328,9 @@ glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth
 	vector<House1> houses;
 	Circle circle(0.8,64);
 	camera.updateMatrix(45.0f, 0.1f, 1000.0f);
-	for (int i = -195; i < 200; i = i + 30)
+	for (int i = -195; i < 200; i = i + 20)
 	{
-		for (int j = -195; j < 200; j = j + 30)
+		for (int j = -195; j < 200; j = j + 20)
 		{
 			glm::vec3 positionHouse(i, 5, j);
 			House1 newHouse(positionHouse, woodTexture, 0, windowTexture, 0, doorTexture, 0, roofTexture, 0, 1);
@@ -459,11 +462,9 @@ glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth
 
 		glEnable(GL_DEPTH_TEST);
     blurShader.Activate();
-	    glUniform1i(glGetUniformLocation(blurShader.ID, "screenTexture"), 0);
-    glUniform1i(glGetUniformLocation(blurShader.ID, "depthTexture"), 1);
-    glUniform1f(glGetUniformLocation(blurShader.ID, "focusDistance"), camera.focusDistance);
-    glUniform1f(glGetUniformLocation(blurShader.ID, "blur"), camera.blur);
-    glUniform1f(glGetUniformLocation(blurShader.ID, "focusRange"), camera.focalRange);
+	glUniform1f(glGetUniformLocation(blurShader.ID, "focusDistance"), camera.focusDistance);
+	glUniform1f(glGetUniformLocation(blurShader.ID, "focusRange"), camera.focalRange);
+	glUniform1f(glGetUniformLocation(blurShader.ID, "blur"), camera.blur);
 
     glBindVertexArray(quadVAO);
     glBindTexture(GL_TEXTURE_2D, textureColorbuffer);

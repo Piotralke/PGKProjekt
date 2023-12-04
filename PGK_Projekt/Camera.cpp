@@ -59,26 +59,24 @@ void Camera::Inputs(GLFWwindow* window)
 	}
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
 	{
-		focalRange += 0.005f;
-		std::cout << focalRange << std::endl;
+		if (fov > 1.0f)
+			fov -= 0.1f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
 	{
-			if(focalRange > 0.01f)
-				focalRange -= 0.005f;
-			std::cout << focalRange << std::endl;
+		if (fov < 30.0f)
+			fov += 0.1f;
+		
 	}
+	
 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
 	{
 		if (blur > 0.01f)
 			blur -= 0.1f;
-		std::cout << "b:" << blur << std::endl;
 	}
 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-	{
-		
+	{	
 		blur += 0.1f;
-		std::cout << "b:" << blur << std::endl;
 	}
 	// Handles mouse inputs
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
@@ -132,7 +130,7 @@ void Camera::Inputs(GLFWwindow* window)
 		glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 		glStencilFunc(GL_EQUAL, 1, 0xFFFFFFFF);
 		shouldDraw = true;
-		updateMatrix(10, 0.1f, 1000.0f);
+		updateMatrix(fov, 0.1f, 1000.0f);
 	}
 	else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
 		// Wy³¹cz tryb nak³adania na stencil buffer
